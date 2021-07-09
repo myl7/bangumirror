@@ -39,6 +39,7 @@ func worker(wait *sync.WaitGroup, ids <-chan int, coll *mongo.Collection) {
 					metNotFound = true
 				}
 			}
+			metNotFound = false
 
 			log.Println(fmt.Sprintf("Failed to fetch subject %d", id))
 			continue
