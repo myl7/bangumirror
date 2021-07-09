@@ -14,9 +14,22 @@ func GetUrl(id int) string {
 
 	q := u.Query()
 	q.Set("responseGroup", "medium")
-	u.RawQuery = "?" + q.Encode()
+	u.RawQuery = q.Encode()
 
 	u.Path = fmt.Sprintf("/subject/%d", id)
+
+	return u.String()
+}
+
+func GetEpUrl(id int) string {
+	u, err := url.Parse(GetUrl(id))
+	if err != nil {
+		panic(err)
+	}
+
+	p := u.Path
+	p += "/ep"
+	u.Path = p
 
 	return u.String()
 }

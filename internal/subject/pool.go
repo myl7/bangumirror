@@ -37,36 +37,19 @@ func worker(wait *sync.WaitGroup, ids <-chan int, coll *mongo.Collection) {
 	for id := range ids {
 		errMsg := fmt.Sprintf("Failed to fetch subject %d", id)
 
-		res, err := http.Get(GetUrl(id))
+		obj, err := reqBase(id)
 		if err != nil {
 			log.Println(errMsg)
 			continue
 		}
 
-		body, err := ioutil.ReadAll(res.Body)
+		eps, err := reqEp(id)
 		if err != nil {
 			log.Println(errMsg)
 			continue
 		}
 
-		err = res.Body.Close()
-		if err != nil {
-			log.Println(errMsg)
-			continue
-		}
-
-		var obj map[string]interface{}
-		err = json.Unmarshal(body, &obj)
-		if err != nil {
-			log.Println(errMsg)
-			continue
-		}
-
-		errInfo, ok := obj["error"]
-		if ok {
-			log.Println(errMsg + ": " + errInfo.(string))
-			continue
-		}
+		obj["eps"] = eps
 
 		_, err = coll.FindOneAndReplace(
 			context.Background(),
@@ -79,4 +62,66 @@ func worker(wait *sync.WaitGroup, ids <-chan int, coll *mongo.Collection) {
 			continue
 		}
 	}
+}
+
+func reqBase(id int) (map[string]interface{}, error) {
+	res, err := http.Get(GetUrl(id))
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	err = res.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	var obj map[string]interface{}
+	err = json.Unmarshal(body, &obj)
+	if err != nil {
+		return nil, err
+	}
+
+	errInfo, ok := obj["error"]
+	if ok {
+		log.Println("Req error: " + errInfo.(string))
+		return nil, err
+	}
+
+	return obj, nil
+}
+
+func reqEp(id int) (interface{}, error) {
+	res, err := http.Get(GetEpUrl(id))
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	err = res.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	var obj map[string]interface{}
+	err = json.Unmarshal(body, &obj)
+	if err != nil {
+		return nil, err
+	}
+
+	errInfo, ok := obj["error"]
+	if ok {
+		log.Println("Req error: " + errInfo.(string))
+		return nil, err
+	}
+
+	return obj["eps"], nil
 }
