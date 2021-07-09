@@ -11,6 +11,12 @@ import (
 	"net/http"
 )
 
+type notFoundError struct{}
+
+func (e notFoundError) Error() string {
+	return "Not found"
+}
+
 func fetch(id int, coll *mongo.Collection) error {
 	obj, err := reqBase(id)
 	if err != nil {
@@ -62,7 +68,7 @@ func reqBase(id int) (map[string]interface{}, error) {
 	errInfo, ok := obj["error"]
 	if ok {
 		log.Println("Req error: " + errInfo.(string))
-		return nil, err
+		return nil, notFoundError{}
 	}
 
 	return obj, nil
@@ -93,7 +99,7 @@ func reqEp(id int) (interface{}, error) {
 	errInfo, ok := obj["error"]
 	if ok {
 		log.Println("Req error: " + errInfo.(string))
-		return nil, err
+		return nil, notFoundError{}
 	}
 
 	return obj["eps"], nil

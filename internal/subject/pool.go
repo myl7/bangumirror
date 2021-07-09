@@ -28,9 +28,18 @@ func Start(size int, coll *mongo.Collection) {
 func worker(wait *sync.WaitGroup, ids <-chan int, coll *mongo.Collection) {
 	defer wait.Done()
 
+	metNotFound := false
 	for id := range ids {
 		err := fetch(id, coll)
 		if err != nil {
+			if _, ok := err.(notFoundError); ok {
+				if metNotFound {
+					break
+				} else {
+					metNotFound = true
+				}
+			}
+
 			log.Println(fmt.Sprintf("Failed to fetch subject %d", id))
 			continue
 		}
